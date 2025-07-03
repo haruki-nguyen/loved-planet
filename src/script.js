@@ -310,8 +310,8 @@ function formatTime(sec) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// Set initial icon to play (⏵) since music is not playing at startup
-playPauseBtn.textContent = "⏵";
+// Set initial icon to play (▶️) since music is not playing at startup
+playPauseBtn.textContent = "▶️";
 
 // Modal logic
 const musicModal = document.getElementById("music-modal");
@@ -346,10 +346,10 @@ playPauseBtn.addEventListener("click", () => {
 });
 
 audio.addEventListener("play", () => {
-  playPauseBtn.textContent = "⏸";
+  playPauseBtn.textContent = "⏸️";
 });
 audio.addEventListener("pause", () => {
-  playPauseBtn.textContent = "⏵";
+  playPauseBtn.textContent = "▶️";
 });
 
 // Slider logic
