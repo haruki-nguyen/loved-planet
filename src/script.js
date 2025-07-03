@@ -296,3 +296,98 @@ const neonMaterial = new THREE.ShaderMaterial({
 
 const neonPoints = new THREE.Points(neonGeometry, neonMaterial);
 scene.add(neonPoints);
+
+// --- Audio player logic ---
+const audio = document.getElementById("bg-music");
+const playPauseBtn = document.getElementById("play-pause");
+const audioSlider = document.getElementById("audio-slider");
+const audioTime = document.getElementById("audio-time");
+
+function formatTime(sec) {
+  if (isNaN(sec)) return "0:00";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+// Set initial icon to play (⏵) since music is not playing at startup
+playPauseBtn.textContent = "⏵";
+
+// Modal logic
+const musicModal = document.getElementById("music-modal");
+const musicYes = document.getElementById("music-yes");
+const musicNo = document.getElementById("music-no");
+
+// Show modal at startup
+musicModal.style.display = "flex";
+
+musicYes.addEventListener("click", () => {
+  audio.play();
+  musicModal.style.display = "none";
+});
+
+musicNo.addEventListener("click", () => {
+  musicModal.style.display = "none";
+});
+
+// Loop music when ended
+audio.addEventListener("ended", () => {
+  audio.currentTime = 0;
+  audio.play();
+});
+
+// Play/pause button logic
+playPauseBtn.addEventListener("click", () => {
+  if (audio.paused) {
+    audio.play();
+  } else {
+    audio.pause();
+  }
+});
+
+audio.addEventListener("play", () => {
+  playPauseBtn.textContent = "⏸";
+});
+audio.addEventListener("pause", () => {
+  playPauseBtn.textContent = "⏵";
+});
+
+// Slider logic
+function updateSlider() {
+  if (!isNaN(audio.duration)) {
+    audioSlider.max = Math.floor(audio.duration);
+    audioSlider.value = Math.floor(audio.currentTime);
+    audioTime.textContent = `${formatTime(audio.currentTime)}/${formatTime(
+      audio.duration
+    )}`;
+  } else {
+    audioTime.textContent = "0:00/0:00";
+  }
+}
+audio.addEventListener("timeupdate", updateSlider);
+audio.addEventListener("loadedmetadata", updateSlider);
+
+audioSlider.addEventListener("input", () => {
+  audio.currentTime = audioSlider.value;
+});
+
+const toggleBtn = document.getElementById("toggle-container-btn");
+const container = document.querySelector(".container");
+
+let containerVisible = true;
+toggleBtn.addEventListener("click", () => {
+  containerVisible = !containerVisible;
+  if (containerVisible) {
+    container.style.display = "";
+    toggleBtn.textContent = "×";
+  } else {
+    container.style.display = "none";
+    toggleBtn.textContent = "☰";
+  }
+});
+// Set initial icon
+if (containerVisible) {
+  toggleBtn.textContent = "×";
+} else {
+  toggleBtn.textContent = "☰";
+}

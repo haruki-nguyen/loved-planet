@@ -8,9 +8,36 @@
   </head>
   <body>
     <div class="bg_heart"></div>
+    <button
+      id="toggle-container-btn"
+      aria-label="Toggle Info"
+      class="toggle-btn"
+    >
+      ☰
+    </button>
     <main class="container">
       <h2 id="text1"></h2>
+      <div id="audio-controls">
+        <button id="play-pause" aria-label="Play/Pause">⏵</button>
+        <input
+          id="audio-slider"
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          step="1"
+        />
+        <span id="audio-time">0:00/0:00</span>
+      </div>
+      <audio id="bg-music" src="src/musics/hebe-tien.mp3"></audio>
     </main>
+    <div id="music-modal" class="modal">
+      <div class="modal-content">
+        <p>Do you want to play music?</p>
+        <button id="music-yes">Yes</button>
+        <button id="music-no">No</button>
+      </div>
+    </div>
     <script type="module" src="./src/script.js"></script>
   </body>
 </html>
