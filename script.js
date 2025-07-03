@@ -1,5 +1,9 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+<<<<<<< HEAD
 import {OrbitControls} from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+=======
+import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
 
 console.clear();
 
@@ -10,24 +14,38 @@ camera.position.set(0, 4, 21);
 let renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
+<<<<<<< HEAD
 window.addEventListener("resize", event => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 })
+=======
+window.addEventListener("resize", (event) => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
 
 let controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enablePan = false;
 
 let gu = {
+<<<<<<< HEAD
   time: {value: 0}
 }
+=======
+  time: { value: 0 },
+};
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
 
 let sizes = [];
 let shift = [];
 let pushShift = () => {
   shift.push(
+<<<<<<< HEAD
     Math.random() * Math.PI, 
     Math.random() * Math.PI * 2, 
     (Math.random() * 0.9 + 0.1) * Math.PI * 0.1,
@@ -44,6 +62,33 @@ for(let i = 0; i < 50000; i++){
   let rand = Math.pow(Math.random(), 1.5);
   let radius = Math.sqrt(R * R * rand + (1 - rand) * r * r);
   pts.push(new THREE.Vector3().setFromCylindricalCoords(radius, Math.random() * 2 * Math.PI, (Math.random() - 0.5) * 2 ));
+=======
+    Math.random() * Math.PI,
+    Math.random() * Math.PI * 2,
+    (Math.random() * 0.9 + 0.1) * Math.PI * 0.1,
+    Math.random() * 0.9 + 0.1
+  );
+};
+let pts = new Array(25000).fill().map((p) => {
+  sizes.push(Math.random() * 1.5 + 0.5);
+  pushShift();
+  return new THREE.Vector3()
+    .randomDirection()
+    .multiplyScalar(Math.random() * 0.5 + 9.5);
+});
+for (let i = 0; i < 50000; i++) {
+  let r = 10,
+    R = 40;
+  let rand = Math.pow(Math.random(), 1.5);
+  let radius = Math.sqrt(R * R * rand + (1 - rand) * r * r);
+  pts.push(
+    new THREE.Vector3().setFromCylindricalCoords(
+      radius,
+      Math.random() * 2 * Math.PI,
+      (Math.random() - 0.5) * 2
+    )
+  );
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
   sizes.push(Math.random() * 1.5 + 0.5);
   pushShift();
 }
@@ -55,7 +100,11 @@ let m = new THREE.PointsMaterial({
   size: 0.1,
   transparent: true,
   blending: THREE.AdditiveBlending,
+<<<<<<< HEAD
   onBeforeCompile: shader => {
+=======
+  onBeforeCompile: (shader) => {
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
     shader.uniforms.time = gu.time;
     shader.vertexShader = `
       uniform float time;
@@ -63,29 +112,49 @@ let m = new THREE.PointsMaterial({
       attribute vec4 shift;
       varying vec3 vColor;
       ${shader.vertexShader}
+<<<<<<< HEAD
     `.replace(
       `gl_PointSize = size;`,
       `gl_PointSize = size * sizes;`
     ).replace(
       `#include <color_vertex>`,
       `#include <color_vertex>
+=======
+    `
+      .replace(`gl_PointSize = size;`, `gl_PointSize = size * sizes;`)
+      .replace(
+        `#include <color_vertex>`,
+        `#include <color_vertex>
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
         float d = length(abs(position) / vec3(40., 10., 40));
         d = clamp(d, 0., 1.);
         vColor = mix(vec3(227., 155., 0.), vec3(100., 50., 255.), d) / 255.;
       `
+<<<<<<< HEAD
     ).replace(
       `#include <begin_vertex>`,
       `#include <begin_vertex>
+=======
+      )
+      .replace(
+        `#include <begin_vertex>`,
+        `#include <begin_vertex>
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
         float t = time;
         float moveT = mod(shift.x + shift.z * t, PI2);
         float moveS = mod(shift.y + shift.z * t, PI2);
         transformed += vec3(cos(moveS) * sin(moveT), cos(moveT), sin(moveS) * sin(moveT)) * shift.a;
       `
+<<<<<<< HEAD
     );
+=======
+      );
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
     console.log(shader.vertexShader);
     shader.fragmentShader = `
       varying vec3 vColor;
       ${shader.fragmentShader}
+<<<<<<< HEAD
     `.replace(
       `#include <clipping_planes_fragment>`,
       `#include <clipping_planes_fragment>
@@ -98,11 +167,31 @@ let m = new THREE.PointsMaterial({
     );
     console.log(shader.fragmentShader);
   }
+=======
+    `
+      .replace(
+        `#include <clipping_planes_fragment>`,
+        `#include <clipping_planes_fragment>
+        float d = length(gl_PointCoord.xy - 0.5);
+        if (d > 0.5) discard;
+      `
+      )
+      .replace(
+        `vec4 diffuseColor = vec4( diffuse, opacity );`,
+        `vec4 diffuseColor = vec4( vColor, smoothstep(0.5, 0.2, d) * 0.5 + 0.5 );`
+      );
+    console.log(shader.fragmentShader);
+  },
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
 });
 let p = new THREE.Points(g, m);
 p.rotation.order = "ZYX";
 p.rotation.z = 0.2;
+<<<<<<< HEAD
 scene.add(p)
+=======
+scene.add(p);
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
 
 let clock = new THREE.Clock();
 
@@ -114,6 +203,7 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
+<<<<<<< HEAD
 
 var i = 0;
 var txt1 = "Sagi yêu dấu...! <Nhưng không hề đầu gấu, <<Sagi babi...!  <Nhưng không hề chi li.  <<Sagi thân mến...! <Nhưng không thích chơi nến.     <<Sagi slay...     <Chắc là có straight =))))) <<Sagi Sagi...!   <Cái tên thật mê li, mê li....!";
@@ -136,3 +226,23 @@ function typeWriter() {
     setTimeout(typeWriter, speed);
   }
 }
+=======
+var i = 0;
+var txt1 =
+  "Sagi yêu dấu...! <Nhưng không hề đầu gấu, <<Sagi babi...!  <Nhưng không hề chi li.  <<Sagi thân mến...! <Nhưng không thích chơi nến.     <<Sagi slay...     <Chắc là có straight =))))) <<Sagi Sagi...!   <Cái tên thật mê li, mê li....!";
+var speed = 50;
+typeWriter();
+function typeWriter() {
+  if (i < txt1.length) {
+    if (txt1.charAt(i) == "<")
+      document.getElementById("text1").innerHTML += "</br>";
+    else if (txt1.charAt(i) == ">")
+      document.getElementById("text1").innerHTML = "";
+    else if (txt1.charAt(i) == "|") {
+      $(".bg_heart").css("");
+    } else document.getElementById("text1").innerHTML += txt1.charAt(i);
+    i++;
+    setTimeout(typeWriter, speed);
+  }
+}
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)

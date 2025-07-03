@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 body{
   overflow: hidden;
   margin: 0;
@@ -12,3 +13,19 @@ body{
   color:white;
   font-family:cursive;
 }
+=======
+body {
+  overflow: hidden;
+  margin: 0;
+}
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 80%;
+  width: 30%;
+  text-align: ;
+  color: white;
+  font-family: cursive;
+}
+>>>>>>> 2080c04 (feat: Add initial HTML, CSS, and JavaScript files for 3D scene and text animation)
