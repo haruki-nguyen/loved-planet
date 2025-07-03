@@ -22,6 +22,8 @@ body {
   font-family: serif;
   padding: 0 1.2rem;
   background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 0.6rem; /* 1rem * 0.6 */
   font-size: 1.2rem; /* fallback for non-h2 text */
   border: 2px solid #fff;

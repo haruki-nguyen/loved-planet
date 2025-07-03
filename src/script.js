@@ -70,68 +70,115 @@ for (let i = 0; i < 50000; i++) {
 const g = new THREE.BufferGeometry().setFromPoints(pts);
 g.setAttribute("sizes", new THREE.Float32BufferAttribute(sizes, 1));
 g.setAttribute("shift", new THREE.Float32BufferAttribute(shift, 4));
-const m = new THREE.PointsMaterial({
-  size: 0.1,
-  transparent: true,
-  blending: THREE.AdditiveBlending,
-  onBeforeCompile: (shader) => {
-    shader.uniforms.time = gu.time;
-    shader.vertexShader = `
-      uniform float time;
-      attribute float sizes;
-      attribute vec4 shift;
-      varying vec3 vColor;
-      ${shader.vertexShader}
-    `
-      .replace(`gl_PointSize = size;`, `gl_PointSize = size * sizes;`)
-      .replace(
-        `#include <color_vertex>`,
-        `#include <color_vertex>
-        float d = length(abs(position) / vec3(40., 10., 40));
-        d = clamp(d, 0., 1.);
-        vColor = mix(vec3(227., 155., 0.), vec3(100., 50., 255.), d) / 255.;
-      `
-      )
-      .replace(
-        `#include <begin_vertex>`,
-        `#include <begin_vertex>
-        float t = time;
-        float moveT = mod(shift.x + shift.z * t, PI2);
-        float moveS = mod(shift.y + shift.z * t, PI2);
-        transformed += vec3(cos(moveS) * sin(moveT), cos(moveT), sin(moveS) * sin(moveT)) * shift.a;
-      `
-      );
-    shader.fragmentShader = `
-      varying vec3 vColor;
-      ${shader.fragmentShader}
-    `
-      .replace(
-        `#include <clipping_planes_fragment>`,
-        `#include <clipping_planes_fragment>
-        float d = length(gl_PointCoord.xy - 0.5);
-        if (d > 0.5) discard;
-      `
-      )
-      .replace(
-        `vec4 diffuseColor = vec4( diffuse, opacity );`,
-        `vec4 diffuseColor = vec4( vColor, smoothstep(0.5, 0.2, d) * 0.5 + 0.5 );`
-      );
+
+// Load the sparkle atlas
+const atlasTexture = new THREE.TextureLoader().load(
+  "src/images/sparkle-atlas.png"
+);
+atlasTexture.minFilter = THREE.LinearFilter;
+atlasTexture.magFilter = THREE.LinearFilter;
+
+// Assign a random atlas index (0-9) to each sparkle
+const atlasIndices = [];
+const numImages = 10;
+for (let i = 0; i < pts.length; i++) {
+  atlasIndices.push(Math.floor(Math.random() * numImages));
+}
+g.setAttribute("atlasIndex", new THREE.Float32BufferAttribute(atlasIndices, 1));
+
+// ShaderMaterial for sparkles with atlas support
+const cols = 5;
+const rows = 2;
+const imgSize = 1.0 / cols;
+const rowSize = 1.0 / rows;
+
+const sparkleMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    time: gu.time,
+    atlas: { value: atlasTexture },
+    aspectRatio: { value: 3 / 4 },
+    cols: { value: cols },
+    rows: { value: rows },
   },
+  vertexShader: `
+    attribute float sizes;
+    attribute vec4 shift;
+    attribute float atlasIndex;
+    uniform float time;
+    varying float vAtlasIndex;
+    void main() {
+      float t = time;
+      float moveT = mod(shift.x + shift.z * t, 6.28318530718);
+      float moveS = mod(shift.y + shift.z * t, 6.28318530718);
+      vec3 transformed = position + vec3(cos(moveS) * sin(moveT), cos(moveT), sin(moveS) * sin(moveT)) * shift.a;
+      vAtlasIndex = atlasIndex;
+      vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+      gl_PointSize = sizes * 0.15 * (300.0 / length(mvPosition.xyz));
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D atlas;
+    uniform float aspectRatio;
+    uniform float cols;
+    uniform float rows;
+    varying float vAtlasIndex;
+    void main() {
+      float aspect = aspectRatio;
+      vec2 centered = gl_PointCoord - vec2(0.5);
+      float halfHeight = 0.5;
+      float halfWidth = 0.5 * aspect;
+      if (abs(centered.x) > halfWidth || abs(centered.y) > halfHeight) discard;
+      // Atlas UV calculation with 180 degree rotation
+      float idx = vAtlasIndex;
+      float col = mod(idx, cols);
+      float row = floor(idx / cols);
+      vec2 uv = vec2(1.0 - gl_PointCoord.x, 1.0 - gl_PointCoord.y);
+      uv.x = uv.x / cols + col / cols;
+      uv.y = uv.y / rows + row / rows;
+      vec4 texColor = texture2D(atlas, uv);
+      if (texColor.a < 0.1) discard;
+      gl_FragColor = vec4(texColor.rgb, 1.0);
+    }
+  `,
+  transparent: false,
+  depthWrite: false,
 });
-const p = new THREE.Points(g, m);
+
+const p = new THREE.Points(g, sparkleMaterial);
 p.rotation.order = "ZYX";
 p.rotation.z = 0.2;
 scene.add(p);
 
 const clock = new THREE.Clock();
 
-renderer.setAnimationLoop(() => {
-  controls.update();
-  const t = clock.getElapsedTime() * 0.5;
-  gu.time.value = t * Math.PI;
-  p.rotation.y = t * 0.05;
-  renderer.render(scene, camera);
+// Animation pause/resume state
+let animationPaused = false;
+
+// Space key binding to toggle animation
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    animationPaused = !animationPaused;
+    // Prevent scrolling when pressing space
+    e.preventDefault();
+    // If resuming, restart the animation loop
+    if (!animationPaused) {
+      renderer.setAnimationLoop(animationLoop);
+    } else {
+      renderer.setAnimationLoop(null);
+    }
+  }
 });
+
+function animationLoop() {
+  controls.update();
+  const t = clock.getElapsedTime() * 0.375;
+  gu.time.value = t * Math.PI;
+  p.rotation.y = t * 0.0375;
+  renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(animationLoop);
 
 // Typewriter effect
 const text1Elem = document.getElementById("text1");
@@ -180,3 +227,72 @@ if (!window.typewriterStarted) {
   window.typewriterStarted = true;
   typeWriter();
 }
+
+// --- Add glowing pink neon circles ---
+const neonCount = 6000;
+const neonPositions = [];
+for (let i = 0; i < neonCount; i++) {
+  if (i < neonCount / 3) {
+    // 1/3: Distribute randomly in space
+    const v = new THREE.Vector3()
+      .randomDirection()
+      .multiplyScalar(Math.random() * 0.5 + 9.5);
+    neonPositions.push(v.x, v.y, v.z);
+  } else if (i < (2 * neonCount) / 3) {
+    // 1/3: Distribute along the planet's orbit (ring)
+    const orbitRadius = 20 + Math.random() * 10; // orbit between 20 and 30 units from center
+    const angle = Math.random() * Math.PI * 2;
+    const yJitter = (Math.random() - 0.5) * 2; // small vertical jitter
+    const x = Math.cos(angle) * orbitRadius;
+    const y = yJitter;
+    const z = Math.sin(angle) * orbitRadius;
+    neonPositions.push(x, y, z);
+  } else {
+    // 1/3: Distribute along a larger outer ring
+    const outerRadius = 40 + Math.random() * 10; // orbit between 40 and 50 units from center
+    const angle = Math.random() * Math.PI * 2;
+    const yJitter = (Math.random() - 0.5) * 2; // small vertical jitter
+    const x = Math.cos(angle) * outerRadius;
+    const y = yJitter;
+    const z = Math.sin(angle) * outerRadius;
+    // Tilt the ring by 30 degrees around the X axis
+    const tilt = Math.PI / 6; // 30 degrees
+    const yT = y * Math.cos(tilt) - z * Math.sin(tilt);
+    const zT = y * Math.sin(tilt) + z * Math.cos(tilt);
+    neonPositions.push(x, yT, zT);
+  }
+}
+const neonGeometry = new THREE.BufferGeometry();
+neonGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(neonPositions, 3)
+);
+
+const neonMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    color: { value: new THREE.Color(0xff33cc) },
+  },
+  vertexShader: `
+    void main() {
+      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+      gl_PointSize = 0.4 * (300.0 / length(mvPosition.xyz));
+    }
+  `,
+  fragmentShader: `
+    uniform vec3 color;
+    void main() {
+      float dist = length(gl_PointCoord - vec2(0.5));
+      float alpha = smoothstep(0.5, 0.0, dist);
+      vec3 core = mix(vec3(1.0), color, dist * 2.0);
+      vec3 glow = color * (1.0 - dist) * 3.0;
+      gl_FragColor = vec4(core + glow, alpha);
+    }
+  `,
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+
+const neonPoints = new THREE.Points(neonGeometry, neonMaterial);
+scene.add(neonPoints);
